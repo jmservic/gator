@@ -118,3 +118,80 @@ func handlerAgg(s *state, cmd command) error {
 	fmt.Println(*rssFeed)
 	return nil
 }
+
+func handlerAddFeed(s *state, cmd command) error {
+	if len(cmd.args) < 2 {
+		return fmt.Errorf("not enough arguments passed into command")
+	}
+	user, err := s.db.GetUser(context.Background(), s.cfg.Current_user_name)
+	if err != nil {
+		return fmt.Errorf("error getting user: %w", err)
+	}
+	currTime := time.Now()
+	createFeedParams := database.CreateFeedParams{
+		ID: uuid.New(),
+		CreatedAt: currTime,
+		UpdatedAt: currTime,
+		Name: cmd.args[0],
+		Url: cmd.args[1],
+		UserID: user.ID,
+	}
+
+	feed, err := s.db.CreateFeed(context.Background(), createFeedParams)
+	if err != nil {
+		return fmt.Errorf("error creating feed: %w", err)
+	}
+	fmt.Println(feed)
+	return nil
+}
+
+func handlerFeeds(s *state, cmd command) error {
+	feeds, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("couldn't get feeds: %w", err)
+	}
+	
+	for _, feed := range feeds {
+		fmt.Printf("Feed: %s\n", feed.Name)
+		fmt.Printf("  URL: %s\n", feed.Url)
+		user, err := s.db.GetUserByID(context.Background(), feed.UserID)
+		if err != nil {
+			fmt.Printf("error getting user from ID: %v", err)
+			continue
+		}
+		fmt.Printf("  Username: %s\n", user.Name)
+	}
+	return nil
+
+}
+
+func handlerFollow(s *state, cmd command) error {
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("requires a feed url.")
+	}
+
+	user, err := s.db.GetUser(context.Background(), s.cfg.Current_user_name)
+	if err != nil {
+		return fmt.Errorf("error getting user information: %w", err)
+	}
+
+	feed, err := s.db.GetFeedByURL(context.Background(), cmd.args[0])
+	if err != nil {
+		return fmt.Errorf("error getting feed information: %w", err)
+	}
+
+	currTime := time.Now()
+	createFeedFollowParams := database.CreateFeedFollowParams{
+		ID: uuid.New(),
+		CreatedAt: currTime,
+		UpdatedAt: currTime,
+		UserID: user.ID,
+		FeedID: feed.ID,
+	}
+
+	rtnRow , err := s.db.CreateFeedFollow(context.Background(), createFeedFollowParams)
+	if err != nil {
+		return fmt.Errorf("error following the feed: %w", err)
+	}
+	fmt.Printf("%v followed \"%v\"\n", user.Name, feed.Name)
+}
