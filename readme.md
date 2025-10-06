@@ -1,4 +1,4 @@
-# Gator
+# gator
 # Description
 Gator is a project on the Boot.dev course that reads RSS feeds and displays the feed, date, title, and link to the user. It uses Postgres to store the user, feeds, posts, etc.
 # Setup
