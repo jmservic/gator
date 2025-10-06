@@ -236,6 +236,7 @@ func scrapeFeeds(s *state) {
 			if t.Code != "23505" {
 				log.Printf("error creating post: %v, %v", t, t.Code)
 			}
+		case nil:
 		default:
 			log.Printf("error creating post: %v", t)
 		}
